@@ -17,6 +17,15 @@ def ball_animation():
     if ball.colliderect(player):
         ball_speed_y *= -1
 
+def player_animation():
+    player.x += player_speed
+    # jogador não pode ir além do que está na tela
+    if player.left <=0:
+        player.left = 0
+    if player.right >= screen_width:
+        player.right = screen_width
+    
+
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
 clock = pygame.time.Clock()
@@ -35,7 +44,9 @@ player = pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 10)
 # variaveis de velocidade
 ball_speed_x = 7
 ball_speed_y = 7
+player_speed = 0
 
+# cores
 bg_color = pygame.Color('grey12')
 light_grey = (200, 200, 200)
 
@@ -45,8 +56,22 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                player_speed -= 10
+            if event.key == pygame.K_RIGHT:
+                player_speed += 10
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                player_speed += 10
+            if event.key == pygame.K_RIGHT:
+                player_speed -= 10
+            
 
     ball_animation()
+
+    player_animation()
+    
 
     # aparencia dos objetos
     screen.fill(bg_color)
