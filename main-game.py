@@ -9,9 +9,9 @@ population = []
 number_population = 10
 size_dna = 20
 choices = [
+    "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
-    "NOP",
 ]
 mutation_rate = 0.005
 
@@ -27,20 +27,27 @@ pygame.display.set_caption('pong')
 
 # retangulos do jogo
 ball = pygame.Rect(screen_width/2 - 15, screen_height/2 - 15, 30, 30)
-player = pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3)
+player = []
+
+for x in range(number_population):
+    player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
 
 # variaveis de velocidade
 ball_speed_x = 6
 ball_speed_y = 6
-player_speed = 0
+player_speed = [0] * number_population
 
 # cores
 bg_color = pygame.Color('grey12')
+player_colors = [
+    (random.randint(30, 255), random.randint(30, 255), random.randint(30, 255) ) 
+    for x in range(number_population)
+    ]
 light_grey = (200, 200, 200)
 white = (255,255,255)
 
 # variavel de pontuação
-score = 0
+score = [0] * number_population
 
 def generate_dna():
     global size_dna, choices
@@ -59,16 +66,16 @@ def generate_population():
         population.append(dna)
 
 def mutation(dna, method='bit_mutation'):
-    global size_dna, population, choices
+    global size_dna, population, choices, mutation_rate
     # função que muta um individuo da população
     # recebe o indice do individuo
     if method == 'bit_mutation':
-        new_chromosome = None
         for x in len(size_dna):
-            if random.uniform(0, 1) > (1/size_dna):
-                while new_chromosome != dna[x]:
-                    new_chromosome = random.choice(choices)
-                dna[x] = new_chromosome
+            if random.uniform(0, 1) <= mutation_rate:
+                new_gene = dna[x]
+                while new_gene == dna[x]:
+                    new_gene = random.choice(choices)
+                dna[x] = new_gene
     return dna
 
 def mate(father, mother):
@@ -119,24 +126,26 @@ def ball_animation():
     if ball.top <= 0:
         ball_speed_y *= -1
     if ball.bottom >= screen_height or ball.bottom >= 680: #evitar bug da bola atravessando o paddle
-        game_restart()
+        #game_restart()
         score = 0
         print(score)
     if ball.left <= 0 or ball.right >= screen_width:
         ball_speed_x *= -1
 
-    if ball.colliderect(player):
-        ball_speed_y *= -1
-        score += 1
-        print(score)
+    for x in range(number_population):
+        if ball.colliderect(player[x]):
+            ball_speed_y *= -1
+            score += 1
+            print(score)
 
 def player_animation():
-    player.x += player_speed
-    # jogador não pode ir além do que está na tela
-    if player.left <=0:
-        player.left = 0
-    if player.right >= screen_width:
-        player.right = screen_width
+    for x in range(number_population):
+        player[x].x += player_speed[x]
+        # jogador não pode ir além do que está na tela
+        if player[x].left <=0:
+            player[x].left = 0
+        if player[x].right >= screen_width:
+            player[x].right = screen_width
 
 def game_restart(): 
     global ball_speed_y, ball_speed_x
@@ -150,44 +159,32 @@ def game_restart():
 
 #click = 0
 
+event = ["NOP"] * number_population
+
+generate_population()
 
 while True:
-    # lidando com input
-    for event in pygame.event.get():
-        #pygame.time.wait(100)
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                #click += 1
-                player_speed -= 16
-                #pygame.time.wait(500)
-            if event.key == pygame.K_RIGHT:
-                #click += 1
-                player_speed += 16
-                #pygame.time.wait(500)
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                #click += 1
-                #print(click)
-                player_speed += 16
-            if event.key == pygame.K_RIGHT:
-                #click += 1
-                #print(click)
-                player_speed -= 16
-        #print(click)
+    for gene in range(size_dna):
+        for x in range(number_population):
+            event[x] = population[x][gene]
+
+        for x in range(len(event)):
+            # NOP - não faz nada
+            if event[x] == choices[0]:
+                player_speed[x] = 0
+            if event[x] == choices[1]:
+                player_speed[x] = -16
+            if event[x] == choices[2]:
+                player_speed[x] = 16
+
+        ball_animation()
+        player_animation()
+        # aparencia dos objetos
+        screen.fill(bg_color)
+        for x in range(number_population):
+            pygame.draw.rect(screen, player_colors[x], player[x])
+        pygame.draw.ellipse(screen, light_grey, ball)
         
-
-    ball_animation()
-
-    player_animation()
-    
-    # aparencia dos objetos
-    screen.fill(bg_color)
-    pygame.draw.rect(screen, light_grey, player)
-    pygame.draw.ellipse(screen, light_grey, ball)
-    
-    # atualizando a tela
-    pygame.display.flip()
-    clock.tick(60)  # limita o loop a rodar 60 vezes por segundo
+        # atualizando a tela
+        pygame.display.flip()
+        clock.tick(60)  # limita o loop a rodar 60 vezes por segundo
