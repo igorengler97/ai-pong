@@ -13,6 +13,7 @@ choices = [
     pygame.K_RIGHT,
     "NOP",
 ]
+mutation_rate = 0.005
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -41,12 +42,6 @@ white = (255,255,255)
 # variavel de pontuação
 score = 0
 
-
-class Direction(Enum):
-    LEFT = 0
-    RIGH = 2
-    STOP = 3
-
 def generate_dna():
     global size_dna, choices
 
@@ -63,7 +58,7 @@ def generate_population():
         dna = generate_dna()
         population.append(dna)
 
-def mutation(index, method='bit_mutation'):
+def mutation(dna, method='bit_mutation'):
     global size_dna, population, choices
     # função que muta um individuo da população
     # recebe o indice do individuo
@@ -71,12 +66,33 @@ def mutation(index, method='bit_mutation'):
         new_chromosome = None
         for x in len(size_dna):
             if random.uniform(0, 1) > (1/size_dna):
-                while new_chromosome != population[index][x]:
+                while new_chromosome != dna[x]:
                     new_chromosome = random.choice(choices)
-                population[index][x] = new_chromosome
+                dna[x] = new_chromosome
+    return dna
 
-def mate():
-    pass
+def mate(father, mother):
+    global number_population, mutation_rate
+    visited = {}
+    new_population = []
+    for x in range(number_population):
+        position = random.randint(0, len(father))
+        if not visited.get(position):
+            visited[position] = True
+            if random.randint(0, 100) > 50:
+                child = father[0:position] + mother[position:]        
+                if random.randint(0, 100) <= mutation_rate:
+                    print("MUTATED")
+                    child = mutation(child)
+                new_population.append(child)
+            else:
+                child = mother[0:position] + father[position:]
+                if random.randint(0, 100) < mutation_rate:
+                    print("MUTATED")
+                    child = mutation(child)
+                new_population.append(child)
+        else:
+            new_population.append(generate_dna())
 
 def roulette_selection():
     # Acho que o metodo da roleta está funcionando
