@@ -1,10 +1,18 @@
+from time import time
 import pygame
 import sys
 import random
 from enum import Enum
 
-cromossomos = 100
-geracoes = 100
+# variaveis do algoritmo genetico
+population = []
+number_population = 10
+size_dna = 20
+choices = [
+    pygame.K_LEFT,
+    pygame.K_RIGHT,
+    "NOP",
+]
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -40,13 +48,51 @@ class Direction(Enum):
     STOP = 3
 
 def generate_dna():
-    pass
+    global size_dna, choices
+
+    dna = []
+    for x in range(size_dna):
+        dna.append(random.choice(choices))
+    
+    return dna
 
 def generate_population():
-    pass
+    global population, number_population
+
+    for x in range(number_population):
+        dna = generate_dna()
+        population.append(dna)
+
+def mutation(index, method='bit_mutation'):
+    global size_dna, population, choices
+    # função que muta um individuo da população
+    # recebe o indice do individuo
+    if method == 'bit_mutation':
+        new_chromosome = None
+        for x in len(size_dna):
+            if random.uniform(0, 1) > (1/size_dna):
+                while new_chromosome != population[index][x]:
+                    new_chromosome = random.choice(choices)
+                population[index][x] = new_chromosome
 
 def mate():
     pass
+
+def roulette_selection():
+    # Acho que o metodo da roleta está funcionando
+    # Precisa validar
+    # p(i) = fi / soma dos fitness
+    # p(i) = probabilidade do individuo ser selecionado
+    # fi = fitness do individuo
+    global score, population, number_population
+    max = sum(score)
+    pick = random.uniform(0, max)
+    current = 0
+    for x in range(number_population):
+        current += score[x]
+        if current > pick:
+            return population[x]
+    
 
 def ball_animation():
     global ball_speed_x, ball_speed_y, score
