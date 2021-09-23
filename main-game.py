@@ -135,8 +135,8 @@ def ball_animation():
     for x in range(number_population):
         if ball.colliderect(player[x]):
             ball_speed_y *= -1
-            score += 1
-            print(score)
+            score[x] += 1
+            print(x, ': ', score[x])
 
 def player_animation():
     for x in range(number_population):
