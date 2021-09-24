@@ -6,14 +6,14 @@ from enum import Enum
 
 # variaveis do algoritmo genetico
 population = []
-number_population = 10
+number_population = 50
 size_dna = 20
 choices = [
     "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.005
+mutation_rate = 0.05
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -70,7 +70,7 @@ def mutation(dna, method='bit_mutation'):
     # função que muta um individuo da população
     # recebe o indice do individuo
     if method == 'bit_mutation':
-        for x in len(size_dna):
+        for x in range(size_dna):
             if random.uniform(0, 1) <= mutation_rate:
                 new_gene = dna[x]
                 while new_gene == dna[x]:
@@ -78,12 +78,26 @@ def mutation(dna, method='bit_mutation'):
                 dna[x] = new_gene
     return dna
 
-def mate(father, mother):
+def isEqual(father, mother):
+    print(father, mother)
+    for x, y in zip(father, mother):
+        if x != y:
+            return False
+    return True
+
+def crossover():
     global number_population, mutation_rate
     visited = {}
     new_population = []
     for x in range(number_population):
-        position = random.randint(0, len(father))
+        father = roulette_selection()
+        mother = roulette_selection()
+        # verifica se a mãe não é igual ao pai
+        while isEqual(father, mother):
+            # caso for verdade, tenta pegar um novo elemento
+            mother = roulette_selection()
+        
+        position = random.randint(0, number_population)
         if not visited.get(position):
             visited[position] = True
             if random.randint(0, 100) > 50:
@@ -100,6 +114,7 @@ def mate(father, mother):
                 new_population.append(child)
         else:
             new_population.append(generate_dna())
+    return new_population
 
 def roulette_selection():
     # Acho que o metodo da roleta está funcionando
@@ -110,12 +125,20 @@ def roulette_selection():
     global score, population, number_population
     max = sum(score)
     pick = random.uniform(0, max)
-    current = 0
+    probabilties = []
     for x in range(number_population):
-        current += score[x]
-        if current > pick:
-            return population[x]
+        if score[x]/max == 0:
+            probabilties.append(0.01)
+        else:
+            probabilties.append(score[x]/max)
     
+    # https://www.cin.ufpe.br/~rso/ag-tbl.pdf slide 20
+    # https://github.com/FredericoBender/Algoritmo-Genetico-Problema-da-Mochila/blob/823e50d523e25f5175a581a533dfde0429d609f3/genetic2020.py#L11
+    # tentei copiar o rolê mas quebra a aplicação
+
+    # http://www2.peq.coppe.ufrj.br/Pessoal/Professores/Arge/COQ897/Naturais/aulas_piloto/aula4.pdf
+
+    population[int(random.uniform(0, 1))]
 
 def ball_animation():
     global ball_speed_x, ball_speed_y, score
@@ -126,26 +149,56 @@ def ball_animation():
     if ball.top <= 0:
         ball_speed_y *= -1
     if ball.bottom >= screen_height or ball.bottom >= 680: #evitar bug da bola atravessando o paddle
-        #game_restart()
-        score = 0
-        print(score)
+        boruto_next_generations()
+        score = [0] * number_population
     if ball.left <= 0 or ball.right >= screen_width:
         ball_speed_x *= -1
 
-    for x in range(number_population):
+    is_colliding = False
+
+    for x in range(len(player)):
         if ball.colliderect(player[x]):
             ball_speed_y *= -1
-            score[x] += 1
-            print(x, ': ', score[x])
+            is_colliding = True
+            break
+    if is_colliding:
+        i = 0
+        number_player = len(player)
+        while i < number_player:
+            if ball.colliderect(player[i]):
+                score[x] += 1
+                i += 1
+            else:
+                player.remove(player[i])
+                number_player = len(player)
 
 def player_animation():
-    for x in range(number_population):
+    for x in range(len(player)):
         player[x].x += player_speed[x]
         # jogador não pode ir além do que está na tela
         if player[x].left <=0:
             player[x].left = 0
         if player[x].right >= screen_width:
             player[x].right = screen_width
+
+def boruto_next_generations():
+    global ball_speed_x, ball_speed_y, number_population
+    ball.center = (screen_width/2, screen_height/2)
+    if ball_speed_x < 0:
+        ball_speed_x *= -1
+
+    player = []
+
+    for x in range(number_population):
+        player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
+        player[x].center = (screen_width/2, screen_height - 55)
+    
+    print(len(player))
+
+    dna = crossover()
+    
+
+    
 
 def game_restart(): 
     global ball_speed_y, ball_speed_x
@@ -165,7 +218,7 @@ generate_population()
 
 while True:
     for gene in range(size_dna):
-        for x in range(number_population):
+        for x in range(len(player)):
             event[x] = population[x][gene]
 
         for x in range(len(event)):
@@ -181,7 +234,7 @@ while True:
         player_animation()
         # aparencia dos objetos
         screen.fill(bg_color)
-        for x in range(number_population):
+        for x in range(len(player)):
             pygame.draw.rect(screen, player_colors[x], player[x])
         pygame.draw.ellipse(screen, light_grey, ball)
         
