@@ -4,12 +4,12 @@ import sys
 import random
 from enum import Enum
 from operator import itemgetter
-import os
+from time import sleep
 
 # variaveis do algoritmo genetico
 population = []
 number_population = 1000
-size_dna = 100
+size_dna = 6000
 choices = [
     "NOP",
     pygame.K_LEFT,
@@ -205,6 +205,7 @@ def boruto_next_generations(gen):
     if ball_speed_x < 0:
         ball_speed_y *= -1
     print('Best fitness of gen', gen, ' is: ', max(score))
+    print('Sum of all fitness of gen ', gen, ' is: ', sum(score))
 
     population = crossover()
     player = []
@@ -250,7 +251,7 @@ while True:
         
         # atualizando a tela
         pygame.display.flip()
-        clock.tick(30)  # limita o loop a rodar 60 vezes por segundo
+        clock.tick(360)  # limita o loop a rodar 60 vezes por segundo
 
     if game_over:
         boruto_next_generations(gen)
