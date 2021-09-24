@@ -17,7 +17,8 @@ choices = [
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.1
+mutation_rate = 0.02
+the_best_of_bests = [[], 0]
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -78,7 +79,7 @@ def mutation(dna, method='bit_mutation'):
     # recebe o indice do individuo
     if method == 'bit_mutation':
         for x in range(size_dna):
-            if random.uniform(0, 1) <= 0.1:
+            if random.uniform(0, 1) <= (1/size_dna):
                 new_gene = dna[x]
                 while new_gene == dna[x]:
                     new_gene = random.choice(choices)
@@ -126,30 +127,9 @@ def roulette_selection():
     ignored_index = -1
     for x in range(number_population):
         probabilities.append([score[x]/maxfit, x])
-    
-    probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
-    pick = random.uniform(0, 1)
-    
-    for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0]:
-            mother = population[probabilities[x][1]]
-            break
-    
-    if mother == []:
-        #aux = random.randint(0, number_population -1)
-        mother = population[probabilities[0][1]]
 
-    probabilities.remove(probabilities[x])
-    pick = random.uniform(0, 1)
-
-    for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0]:
-            father = population[probabilities[x][1]]
-            break
-    
-    if father == []:
-        #aux = random.randint(0, number_population -1)
-        father = population[probabilities[0][1]]
+    father = population[probabilities[0][1]]
+    mother = population[probabilities[1][1]]
     
     return [father, mother]
     
@@ -205,12 +185,15 @@ def player_animation():
                 player[x][0].right = screen_width
 
 def boruto_next_generations(gen):
-    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed
+    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests
     ball.center = (screen_width/2, screen_height/2)
     if ball_speed_x < 0:
         ball_speed_y *= -1
-    print('Best fitness of gen', gen, ' is: ', max(score))
-    print('Sum of all fitness of gen ', gen, ' is: ', sum(score))
+
+    maxFitIndex =  max(range(len(score)), key=score.__getitem__)
+
+    if max(score) > the_best_of_bests[1]:
+        the_best_of_bests = [population[maxFitIndex], max(score)]
 
     population = crossover()
     player = []
@@ -225,16 +208,24 @@ def boruto_next_generations(gen):
 
 event = ["NOP"] * number_population
 
+def saving(gen):
+    global the_best_of_bests, score
+    maxFit = max(score)
+    
+    textfile = open("chromossome_"+ str(gen) + "_" + str(maxFit) +".txt", "w")
+    for element in the_best_of_bests:
+        textfile.write(str(element) + "\n")
+    textfile.close()
+    print("Jesus salvou o melhor dos melhores")
+            
+
 generate_population()
 
 gen = 1
+best_score = 0
+alive = 0
 
 while True:
-    for a in pygame.event.get():
-        if a.type == pygame.KEYDOWN:
-            if a.key == pygame.K_ESCAPE:
-                print("saindo")
-                sys.exit()
                 
     for gene in range(size_dna):
         for x in range(len(player)):
@@ -253,6 +244,16 @@ while True:
         if game_over:
             break
         player_animation()
+
+        for a in pygame.event.get():
+            if a.type == pygame.KEYDOWN:
+                if a.key == pygame.K_ESCAPE:
+                    print("saindo")
+                    sys.exit()
+                if a.key == pygame.K_s:
+                    print('Eu sou jesus e eu tenho o poder de salvar')
+                    saving(gen)
+
         # aparencia dos objetos
         screen.fill(bg_color)
 
@@ -265,8 +266,16 @@ while True:
         textsurface3 = myfont.render('Fitness sum: '+ str(sum(score)), True, white)
         screen.blit(textsurface3,(520,50))
 
-        #textsurface4 = myfont.render('Alive: '+ str(len(player)), True, white)
-        #screen.blit(textsurface4,(220,50))
+        textsurface4 = myfont.render('Best score: '+ str(best_score), True, white)
+        screen.blit(textsurface4,(400,100))
+        
+        alive = 0
+        for ply in player:
+            if ply[1]:
+                alive += 1
+
+        textsurface5 = myfont.render('Alive: '+ str(alive), True, white)
+        screen.blit(textsurface5,(220,50))
 
         for x in range(len(player)):
             if player[x][1]:
@@ -278,6 +287,8 @@ while True:
         clock.tick(360)  # limita o loop a rodar 60 vezes por segundo
 
     if game_over:
+        if best_score < max(score):
+            best_score = max(score)
         boruto_next_generations(gen)
         gen +=1
     naoapagaressamerda = pygame.event.get()
