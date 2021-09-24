@@ -3,6 +3,7 @@ import pygame
 import sys
 import random
 from enum import Enum
+from operator import itemgetter
 
 # variaveis do algoritmo genetico
 population = []
@@ -78,25 +79,12 @@ def mutation(dna, method='bit_mutation'):
                 dna[x] = new_gene
     return dna
 
-def isEqual(father, mother):
-    print(father, mother)
-    for x, y in zip(father, mother):
-        if x != y:
-            return False
-    return True
-
 def crossover():
     global number_population, mutation_rate
     visited = {}
     new_population = []
     for x in range(number_population):
-        father = roulette_selection()
-        mother = roulette_selection()
-        # verifica se a mãe não é igual ao pai
-        while isEqual(father, mother):
-            # caso for verdade, tenta pegar um novo elemento
-            mother = roulette_selection()
-        
+        father, mother = roulette_selection()   
         position = random.randint(0, number_population)
         if not visited.get(position):
             visited[position] = True
@@ -123,14 +111,38 @@ def roulette_selection():
     # p(i) = probabilidade do individuo ser selecionado
     # fi = fitness do individuo
     global score, population, number_population
-    max = sum(score)
-    pick = random.uniform(0, max)
-    probabilties = []
+    max = sum(score) if sum(score) > 0 else 1
+    probabilities = []
+    father, mother = [], []
+    ignored_index = -1
     for x in range(number_population):
-        if score[x]/max == 0:
-            probabilties.append(0.01)
-        else:
-            probabilties.append(score[x]/max)
+        probabilities.append([score[x]/max, x])
+    
+    probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
+    pick = random.uniform(0, 1)
+
+    for x in range(number_population - 1):
+        if pick >= 1 - probabilities[x][0]:
+            mother = population[probabilities[x][1]]
+            ignored_index = x
+    
+    if mother == []:
+        aux = random.randint(0, number_population -1)
+        mother = population[aux]
+
+    probabilities.remove(probabilities[x])
+    pick = random.uniform(0, 1)
+
+    for x in range(number_population - 1):
+        if pick >= 1 - probabilities[x][0]:
+            father = population[probabilities[x][1]]
+            ignored_index = x
+    
+    if father == []:
+        aux = random.randint(0, number_population -1)
+        father = population[aux]
+    
+    return [father, mother]
     
     # https://www.cin.ufpe.br/~rso/ag-tbl.pdf slide 20
     # https://github.com/FredericoBender/Algoritmo-Genetico-Problema-da-Mochila/blob/823e50d523e25f5175a581a533dfde0429d609f3/genetic2020.py#L11
@@ -149,8 +161,7 @@ def ball_animation():
     if ball.top <= 0:
         ball_speed_y *= -1
     if ball.bottom >= screen_height or ball.bottom >= 680: #evitar bug da bola atravessando o paddle
-        boruto_next_generations()
-        score = [0] * number_population
+        return True
     if ball.left <= 0 or ball.right >= screen_width:
         ball_speed_x *= -1
 
@@ -171,6 +182,7 @@ def ball_animation():
             else:
                 player.remove(player[i])
                 number_player = len(player)
+    return False
 
 def player_animation():
     for x in range(len(player)):
@@ -180,6 +192,15 @@ def player_animation():
             player[x].left = 0
         if player[x].right >= screen_width:
             player[x].right = screen_width
+
+def game_restart(): 
+    global ball_speed_y, ball_speed_x
+    ball.center = (screen_width/2, screen_height/2)
+    #print("speed ", ball_speed_x)
+    if ball_speed_x < 0:
+        ball_speed_x *= -1
+    #ball_speed_y *= 1
+    player.center = (screen_width/2, screen_height - 55)
 
 def boruto_next_generations():
     global ball_speed_x, ball_speed_y, number_population
@@ -191,24 +212,12 @@ def boruto_next_generations():
 
     for x in range(number_population):
         player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
+    
+    for x in range(number_population):
         player[x].center = (screen_width/2, screen_height - 55)
-    
-    print(len(player))
 
-    dna = crossover()
-    
-
-    
-
-def game_restart(): 
-    global ball_speed_y, ball_speed_x
-    ball.center = (screen_width/2, screen_height/2)
-    #print("speed ", ball_speed_x)
-    if ball_speed_x < 0:
-        ball_speed_x *= -1
-    #ball_speed_y *= 1
-    player.center = (screen_width/2, screen_height - 55)
-    
+    population = crossover()
+    pygame.display.flip()
 
 #click = 0
 
@@ -230,7 +239,9 @@ while True:
             if event[x] == choices[2]:
                 player_speed[x] = 16
 
-        ball_animation()
+        game_over = ball_animation()
+        if game_over:
+            break
         player_animation()
         # aparencia dos objetos
         screen.fill(bg_color)
@@ -241,3 +252,9 @@ while True:
         # atualizando a tela
         pygame.display.flip()
         clock.tick(60)  # limita o loop a rodar 60 vezes por segundo
+        
+    if game_over:
+        print('chamou o boruto')
+        boruto_next_generations()
+        score = [0] * number_population
+        player_speed = [0] * number_population
