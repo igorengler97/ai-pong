@@ -7,14 +7,14 @@ from operator import itemgetter
 
 # variaveis do algoritmo genetico
 population = []
-number_population = 50
-size_dna = 20
+number_population = 1000
+size_dna = 300
 choices = [
     "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.05
+mutation_rate = 0.02
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -91,13 +91,11 @@ def crossover():
             if random.randint(0, 100) > 50:
                 child = father[0:position] + mother[position:]        
                 if random.randint(0, 100) <= mutation_rate:
-                    print("MUTATED")
                     child = mutation(child)
                 new_population.append(child)
             else:
                 child = mother[0:position] + father[position:]
                 if random.randint(0, 100) < mutation_rate:
-                    print("MUTATED")
                     child = mutation(child)
                 new_population.append(child)
         else:
@@ -169,15 +167,15 @@ def ball_animation():
 
     for x in range(len(player)):
         if ball.colliderect(player[x]):
-            ball_speed_y *= -1
             is_colliding = True
             break
     if is_colliding:
+        ball_speed_y *= -1
         i = 0
         number_player = len(player)
         while i < number_player:
             if ball.colliderect(player[i]):
-                score[x] += 1
+                score[i] += 1
                 i += 1
             else:
                 player.remove(player[i])
@@ -193,23 +191,17 @@ def player_animation():
         if player[x].right >= screen_width:
             player[x].right = screen_width
 
-def game_restart(): 
-    global ball_speed_y, ball_speed_x
-    ball.center = (screen_width/2, screen_height/2)
-    #print("speed ", ball_speed_x)
-    if ball_speed_x < 0:
-        ball_speed_x *= -1
-    #ball_speed_y *= 1
-    player.center = (screen_width/2, screen_height - 55)
-
-def boruto_next_generations():
-    global ball_speed_x, ball_speed_y, number_population
+def boruto_next_generations(gen):
+    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed
     ball.center = (screen_width/2, screen_height/2)
     if ball_speed_x < 0:
-        ball_speed_x *= -1
+        ball_speed_y *= -1
 
+    print('Best fitness of gen', gen, ' is: ', max(score))
     player = []
-
+    score = [0] * number_population
+    player_speed = [0] * number_population
+    
     for x in range(number_population):
         player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
     
@@ -219,11 +211,11 @@ def boruto_next_generations():
     population = crossover()
     pygame.display.flip()
 
-#click = 0
-
 event = ["NOP"] * number_population
 
 generate_population()
+
+gen = 1
 
 while True:
     for gene in range(size_dna):
@@ -252,9 +244,8 @@ while True:
         # atualizando a tela
         pygame.display.flip()
         clock.tick(60)  # limita o loop a rodar 60 vezes por segundo
-        
+
     if game_over:
-        print('chamou o boruto')
-        boruto_next_generations()
-        score = [0] * number_population
-        player_speed = [0] * number_population
+        boruto_next_generations(gen)
+        gen +=1
+    naoapagaressamerda = pygame.event.get()
