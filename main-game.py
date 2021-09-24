@@ -4,11 +4,12 @@ import sys
 import random
 from enum import Enum
 from operator import itemgetter
+import os
 
 # variaveis do algoritmo genetico
 population = []
 number_population = 1000
-size_dna = 300
+size_dna = 100
 choices = [
     "NOP",
     pygame.K_LEFT,
@@ -30,8 +31,9 @@ pygame.display.set_caption('pong')
 ball = pygame.Rect(screen_width/2 - 15, screen_height/2 - 15, 30, 30)
 player = []
 
+# pos 0 = player; pos 1 = vivo/morto
 for x in range(number_population):
-    player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
+    player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3), True])
 
 # variaveis de velocidade
 ball_speed_x = 6
@@ -109,20 +111,24 @@ def roulette_selection():
     # p(i) = probabilidade do individuo ser selecionado
     # fi = fitness do individuo
     global score, population, number_population
-    max = sum(score) if sum(score) > 0 else 1
+    
+    maxfit = sum(score, 0)
+    if maxfit == 0:
+        maxfit = 1
+    
     probabilities = []
     father, mother = [], []
     ignored_index = -1
     for x in range(number_population):
-        probabilities.append([score[x]/max, x])
+        probabilities.append([score[x]/maxfit, x])
     
     probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
     pick = random.uniform(0, 1)
-
+    
     for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0]:
+        if pick <= 1 - probabilities[x][0]:
             mother = population[probabilities[x][1]]
-            ignored_index = x
+            break
     
     if mother == []:
         aux = random.randint(0, number_population -1)
@@ -132,9 +138,9 @@ def roulette_selection():
     pick = random.uniform(0, 1)
 
     for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0]:
+        if pick <= 1 - probabilities[x][0]:
             father = population[probabilities[x][1]]
-            ignored_index = x
+            break
     
     if father == []:
         aux = random.randint(0, number_population -1)
@@ -166,49 +172,49 @@ def ball_animation():
     is_colliding = False
 
     for x in range(len(player)):
-        if ball.colliderect(player[x]):
+        if ball.colliderect(player[x][0]) and player[x][1]:
             is_colliding = True
             break
     if is_colliding:
         ball_speed_y *= -1
         i = 0
-        number_player = len(player)
+        number_player = len(player) 
         while i < number_player:
-            if ball.colliderect(player[i]):
+            if ball.colliderect(player[i][0]) and player[i][1]:
                 score[i] += 1
-                i += 1
             else:
-                player.remove(player[i])
-                number_player = len(player)
+                player[i][1] = False
+            i += 1
     return False
 
 def player_animation():
+    global player
     for x in range(len(player)):
-        player[x].x += player_speed[x]
-        # jogador não pode ir além do que está na tela
-        if player[x].left <=0:
-            player[x].left = 0
-        if player[x].right >= screen_width:
-            player[x].right = screen_width
+        # se o jogador estiver vivo computa a animação
+        if(player[x][1]):
+            player[x][0].x += player_speed[x]
+            # jogador não pode ir além do que está na tela
+            if player[x][0].left <=0:
+                player[x][0].left = 0
+            if player[x][0].right >= screen_width:
+                player[x][0].right = screen_width
 
 def boruto_next_generations(gen):
     global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed
     ball.center = (screen_width/2, screen_height/2)
     if ball_speed_x < 0:
         ball_speed_y *= -1
-
     print('Best fitness of gen', gen, ' is: ', max(score))
+
+    population = crossover()
     player = []
     score = [0] * number_population
     player_speed = [0] * number_population
+    for x in range(number_population):
+        player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3), True])
     
     for x in range(number_population):
-        player.append(pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3))
-    
-    for x in range(number_population):
-        player[x].center = (screen_width/2, screen_height - 55)
-
-    population = crossover()
+        player[x][0].center = (screen_width/2, screen_height - 55)
     pygame.display.flip()
 
 event = ["NOP"] * number_population
@@ -238,12 +244,13 @@ while True:
         # aparencia dos objetos
         screen.fill(bg_color)
         for x in range(len(player)):
-            pygame.draw.rect(screen, player_colors[x], player[x])
+            if player[x][1]:
+                pygame.draw.rect(screen, player_colors[x], player[x][0])
         pygame.draw.ellipse(screen, light_grey, ball)
         
         # atualizando a tela
         pygame.display.flip()
-        clock.tick(60)  # limita o loop a rodar 60 vezes por segundo
+        clock.tick(30)  # limita o loop a rodar 60 vezes por segundo
 
     if game_over:
         boruto_next_generations(gen)
