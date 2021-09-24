@@ -33,7 +33,7 @@ player = []
 
 # pos 0 = player; pos 1 = vivo/morto
 for x in range(number_population):
-    player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3), True])
+    player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
 
 # variaveis de velocidade
 ball_speed_x = 2
@@ -165,7 +165,7 @@ def ball_animation():
 
     if ball.top <= 0:
         ball_speed_y *= -1
-    if ball.bottom >= screen_height or ball.bottom >= 680: #evitar bug da bola atravessando o paddle
+    if ball.bottom >= screen_height or ball.bottom >= 677: #evitar bug da bola atravessando o paddle
         return True
     if ball.left <= 0 or ball.right >= screen_width:
         ball_speed_x *= -1
@@ -213,7 +213,7 @@ def boruto_next_generations(gen):
     score = [0] * number_population
     player_speed = [0] * number_population
     for x in range(number_population):
-        player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3), True])
+        player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
     
     for x in range(number_population):
         player[x][0].center = (screen_width/2, screen_height - 55)
