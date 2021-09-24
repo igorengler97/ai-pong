@@ -6,16 +6,18 @@ from enum import Enum
 from operator import itemgetter
 from time import sleep
 
+
+
 # variaveis do algoritmo genetico
 population = []
 number_population = 100
-size_dna = 600
+size_dna = 800
 choices = [
     "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.02
+mutation_rate = 0.1
 
 # setup geral
 pygame.init()  # inicia todos os módulos pygame, necessário
@@ -51,6 +53,8 @@ white = (255,255,255)
 
 # variavel de pontuação
 score = [0] * number_population
+
+myfont = pygame.font.SysFont('Arial', 25)
 
 def generate_dna():
     global size_dna, choices
@@ -132,8 +136,8 @@ def roulette_selection():
             break
     
     if mother == []:
-        aux = random.randint(0, number_population -1)
-        mother = population[aux]
+        #aux = random.randint(0, number_population -1)
+        mother = population[probabilities[0][1]]
 
     probabilities.remove(probabilities[x])
     pick = random.uniform(0, 1)
@@ -144,8 +148,8 @@ def roulette_selection():
             break
     
     if father == []:
-        aux = random.randint(0, number_population -1)
-        father = population[aux]
+        #aux = random.randint(0, number_population -1)
+        father = population[probabilities[0][1]]
     
     return [father, mother]
     
@@ -165,7 +169,7 @@ def ball_animation():
 
     if ball.top <= 0:
         ball_speed_y *= -1
-    if ball.bottom >= screen_height or ball.bottom >= 677: #evitar bug da bola atravessando o paddle
+    if ball.bottom >= screen_height or ball.bottom >= 667: #evitar bug da bola atravessando o paddle
         return True
     if ball.left <= 0 or ball.right >= screen_width:
         ball_speed_x *= -1
@@ -226,6 +230,12 @@ generate_population()
 gen = 1
 
 while True:
+    for a in pygame.event.get():
+        if a.type == pygame.KEYDOWN:
+            if a.key == pygame.K_ESCAPE:
+                print("saindo")
+                sys.exit()
+                
     for gene in range(size_dna):
         for x in range(len(player)):
             event[x] = population[x][gene]
@@ -245,6 +255,19 @@ while True:
         player_animation()
         # aparencia dos objetos
         screen.fill(bg_color)
+
+        textsurface = myfont.render('Generation: '+ str(gen), True, white)
+        screen.blit(textsurface,(50,50))
+
+        textsurface2 = myfont.render('Score: '+ str(max(score)), True, white)
+        screen.blit(textsurface2,(400,50))
+
+        textsurface3 = myfont.render('Fitness sum: '+ str(sum(score)), True, white)
+        screen.blit(textsurface3,(520,50))
+
+        #textsurface4 = myfont.render('Alive: '+ str(len(player)), True, white)
+        #screen.blit(textsurface4,(220,50))
+
         for x in range(len(player)):
             if player[x][1]:
                 pygame.draw.rect(screen, player_colors[x], player[x][0])
