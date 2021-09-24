@@ -8,8 +8,8 @@ from time import sleep
 
 # variaveis do algoritmo genetico
 population = []
-number_population = 1000
-size_dna = 6000
+number_population = 100
+size_dna = 600
 choices = [
     "NOP",
     pygame.K_LEFT,
@@ -36,8 +36,8 @@ for x in range(number_population):
     player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 3), True])
 
 # variaveis de velocidade
-ball_speed_x = 6
-ball_speed_y = 6
+ball_speed_x = 2
+ball_speed_y = 2
 player_speed = [0] * number_population
 
 # cores
@@ -74,7 +74,7 @@ def mutation(dna, method='bit_mutation'):
     # recebe o indice do individuo
     if method == 'bit_mutation':
         for x in range(size_dna):
-            if random.uniform(0, 1) <= mutation_rate:
+            if random.uniform(0, 1) <= 0.1:
                 new_gene = dna[x]
                 while new_gene == dna[x]:
                     new_gene = random.choice(choices)
@@ -88,7 +88,8 @@ def crossover():
     for x in range(number_population):
         father, mother = roulette_selection()   
         position = random.randint(0, number_population)
-        if not visited.get(position):
+        chance_of_sex = random.uniform(0, 1)
+        if not visited.get(position) and chance_of_sex < 0.5:
             visited[position] = True
             if random.randint(0, 100) > 50:
                 child = father[0:position] + mother[position:]        
@@ -126,7 +127,7 @@ def roulette_selection():
     pick = random.uniform(0, 1)
     
     for x in range(number_population - 1):
-        if pick <= 1 - probabilities[x][0]:
+        if pick >= 1 - probabilities[x][0]:
             mother = population[probabilities[x][1]]
             break
     
@@ -138,7 +139,7 @@ def roulette_selection():
     pick = random.uniform(0, 1)
 
     for x in range(number_population - 1):
-        if pick <= 1 - probabilities[x][0]:
+        if pick >= 1 - probabilities[x][0]:
             father = population[probabilities[x][1]]
             break
     
