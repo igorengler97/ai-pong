@@ -2,10 +2,14 @@ from time import time
 import pygame
 import sys
 import random
-from enum import Enum
 from operator import itemgetter
 from time import sleep
 
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.backends.backend_agg as agg
+import matplotlib.pylab as plt
 
 
 # variaveis do algoritmo genetico
@@ -86,15 +90,18 @@ def mutation(dna, method='bit_mutation'):
                 dna[x] = new_gene
     return dna
 
+visited = {}
+
 def crossover():
-    global number_population, mutation_rate
+    global number_population, mutation_rate, visited
     visited = {}
     new_population = []
     for x in range(number_population):
-        father, mother = roulette_selection()   
-        position = random.randint(0, number_population)
+        # pai, mãe, index pai, index mãe
+        father, mother, fi, mi = roulette_selection()   
+        position = random.randint(0, size_dna - 1)
         chance_of_sex = random.uniform(0, 1)
-        if not visited.get(position) and chance_of_sex < 0.5:
+        if (not visited.get(fi) or not visited.get(mi)) and chance_of_sex < 0.8:
             visited[position] = True
             if random.randint(0, 100) > 50:
                 child = father[0:position] + mother[position:]        
@@ -116,7 +123,7 @@ def roulette_selection():
     # p(i) = fi / soma dos fitness
     # p(i) = probabilidade do individuo ser selecionado
     # fi = fitness do individuo
-    global score, population, number_population
+    global score, population, number_population, visited
     
     maxfit = sum(score, 0)
     if maxfit == 0:
@@ -124,14 +131,40 @@ def roulette_selection():
     
     probabilities = []
     father, mother = [], []
-    ignored_index = -1
+    fi, mi = -1, -1
     for x in range(number_population):
         probabilities.append([score[x]/maxfit, x])
-
-    father = population[probabilities[0][1]]
-    mother = population[probabilities[1][1]]
     
-    return [father, mother]
+    probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
+    pick = random.uniform(0, 1)
+    
+    for x in range(number_population - 1):
+        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
+            mi = probabilities[x][1]
+            mother = population[mi]
+            visited[mi] = True
+            break
+    
+    if mother == []:
+        aux = random.randint(0, number_population -1)
+        mother = population[aux]
+        visited[aux] = True
+
+    pick = random.uniform(0, 1)
+
+    for x in range(number_population - 1):
+        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
+            fi = probabilities[x][1]
+            father = population[fi]
+            visited[fi] = True
+            break
+    
+    if father == []:
+        aux = random.randint(0, number_population -1)
+        father = population[aux]
+        visited[aux] = True
+    
+    return [father, mother, fi, mi]
     
     # https://www.cin.ufpe.br/~rso/ag-tbl.pdf slide 20
     # https://github.com/FredericoBender/Algoritmo-Genetico-Problema-da-Mochila/blob/823e50d523e25f5175a581a533dfde0429d609f3/genetic2020.py#L11
@@ -224,6 +257,20 @@ generate_population()
 gen = 1
 best_score = 0
 alive = 0
+fitness_data = [0]
+
+fitness_data.append(sum(score))
+fig = plt.figure(figsize=[2,2], dpi=100)
+ax = fig.gca()
+# alterar pra fitness_data
+ax.plot(fitness_data)
+canvas = agg.FigureCanvasAgg(fig)
+canvas.draw()
+renderer = canvas.get_renderer()
+raw_data = renderer.tostring_rgb()
+
+graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
+
 
 while True:
                 
@@ -263,7 +310,7 @@ while True:
         textsurface2 = myfont.render('Score: '+ str(max(score)), True, white)
         screen.blit(textsurface2,(400,50))
 
-        textsurface3 = myfont.render('Fitness sum: '+ str(sum(score)), True, white)
+        textsurface3 = myfont.render('Total Fitness: '+ str(sum(score)), True, white)
         screen.blit(textsurface3,(520,50))
 
         textsurface4 = myfont.render('Best score: '+ str(best_score), True, white)
@@ -281,6 +328,15 @@ while True:
             if player[x][1]:
                 pygame.draw.rect(screen, player_colors[x], player[x][0])
         pygame.draw.ellipse(screen, light_grey, ball)
+
+        ax.plot(fitness_data)
+        canvas = agg.FigureCanvasAgg(fig)
+        canvas.draw()
+        renderer = canvas.get_renderer()
+        raw_data = renderer.tostring_rgb()
+
+        graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
+        screen.blit(graph, (0,0))
         
         # atualizando a tela
         pygame.display.flip()
@@ -289,6 +345,8 @@ while True:
     if game_over:
         if best_score < max(score):
             best_score = max(score)
+
+        fitness_data.append(sum(score))
         boruto_next_generations(gen)
         gen +=1
     naoapagaressamerda = pygame.event.get()
