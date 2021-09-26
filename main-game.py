@@ -319,20 +319,29 @@ def saving(gen):
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
 
+
+
 def plotInfo():
     plot1 = plt.figure(1)
+    plot1 = plt.figure(figsize=(15,4))
     plt.plot(gen_list, best_fitness)
     plt.xlabel("Generation")
     plt.ylabel("Best Fitness")
     plt.title("Best fitness of each generation")
+    #plt.figure(figsize=(10,4))
     plt.savefig('BestFitness.png')
 
     plot2 = plt.figure(2)
+    plot2 = plt.figure(figsize=(15,4))
     plt.plot(gen_list, sum_fitness)
     plt.xlabel("Generation")
     plt.ylabel("Sum of fitness")
     plt.title("Sum of fitness of each generation")
+    
     plt.savefig('Sumfitness.png')
+
+
+    
 
 best_fitness = []
 sum_fitness = []
@@ -371,6 +380,13 @@ while True:
             sum_fitness.append(sum(score))
             break
         player_animation()
+
+        #if gen >= 1001:
+        #    saveScore()
+        #    print("saindo")
+        #    pygame.quit()
+        #    plotInfo()
+        #    sys.exit()
 
         for a in pygame.event.get():
             if a.type == pygame.KEYDOWN:
