@@ -47,7 +47,7 @@ for x in range(number_population):
     player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
     time_alive.append(t)
 # variaveis de velocidade
-ball_speed_x = 1
+ball_speed_x = 2
 ball_speed_y = 2
 player_speed = [0] * number_population
 
@@ -103,7 +103,7 @@ def crossover():
     visited = {}
     new_population = []
     for x in range(number_population):
-        time.slepp(0.0001)
+        time.sleep(0.0001)
         # pai, mãe, index pai, index mãe
         father, mother, fi, mi = roulette_selection()
 
@@ -296,7 +296,7 @@ def boruto_next_generations(gen):
     # atualiza o display
     pygame.display.flip()
 
-def saveScore(best_fitness, sum_fitness):
+def saveScore():
     textfile = open("bestFitness.txt", "w")
     for element in best_fitness:
         textfile.write(str(element) + "\n")
@@ -319,8 +319,24 @@ def saving(gen):
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
 
+def plotInfo():
+    plot1 = plt.figure(1)
+    plt.plot(gen_list, best_fitness)
+    plt.xlabel("Generation")
+    plt.ylabel("Best Fitness")
+    plt.title("Best fitness of each generation")
+    plt.savefig('BestFitness.png')
+
+    plot2 = plt.figure(2)
+    plt.plot(gen_list, sum_fitness)
+    plt.xlabel("Generation")
+    plt.ylabel("Sum of fitness")
+    plt.title("Sum of fitness of each generation")
+    plt.savefig('Sumfitness.png')
+
 best_fitness = []
 sum_fitness = []
+gen_list = []
 # 1ª vez executando, prepara o ambiente
 generate_population()
 gen = 1
@@ -350,6 +366,7 @@ while True:
 
         game_over = ball_animation()
         if game_over:
+            gen_list.append(gen)
             best_fitness.append(max(score))
             sum_fitness.append(sum(score))
             break
@@ -358,8 +375,10 @@ while True:
         for a in pygame.event.get():
             if a.type == pygame.KEYDOWN:
                 if a.key == pygame.K_ESCAPE:
-                    saveScore(best_fitness, sum_fitness)
+                    saveScore()
                     print("saindo")
+                    pygame.quit()
+                    plotInfo()
                     sys.exit()
                 if a.key == pygame.K_s:
                     print('Eu sou jesus e eu tenho o poder de salvar')
