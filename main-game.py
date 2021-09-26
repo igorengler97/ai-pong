@@ -102,13 +102,26 @@ def crossover():
     new_population = []
     for x in range(number_population):
         # pai, mãe, index pai, index mãe
-        father, mother, fi, mi = roulette_selection()   
+        father, mother, fi, mi = roulette_selection()
+
+        # 5 % dos melhor individuo vai direto pra proxima geração
+        if x >= 0 and x <= int(number_population * 0.01):
+            # escolhe o pai ou a mãe pra ir pra proxima geração
+            if random.uniform(0, 1) >= 0.5:
+                new_population.append(father)
+                visited[fi] = True
+            else:
+                new_population.append(mother)
+                visited[mi] = True
+            continue
+
         position = random.randint(0, size_dna - 1)
         # chance de copularem
         chance_of_sex = random.uniform(0, 1)
         # chance da informação genetica do pai vir primeiro
         if (not visited.get(fi) or not visited.get(mi)) and chance_of_sex < 0.95:
-            visited[position] = True
+            visited[fi] = True
+            visited[mi] = True
             if random.randint(0, 100) > 50:
                 child = father[0:position] + mother[position:]        
                 if random.randint(0, 100) <= mutation_rate:
@@ -155,7 +168,7 @@ def roulette_selection():
     
     # sorteia e marca como visitado a mãe
     for x in range(number_population - 1):
-        if pick <= probabilities[x][0] and (not visited.get(probabilities[x][1])):
+        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
             mi = probabilities[x][1]
             mother = population[mi]
             visited[mi] = True
@@ -170,7 +183,7 @@ def roulette_selection():
 
     # sorteia e marca como visitado o pai
     for x in range(number_population - 1):
-        if pick <= probabilities[x][0] and (not visited.get(probabilities[x][1])):
+        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
             fi = probabilities[x][1]
             father = population[fi]
             visited[fi] = True
@@ -280,6 +293,16 @@ def boruto_next_generations(gen):
     # atualiza o display
     pygame.display.flip()
 
+def saveScore(best_fitness, sum_fitness):
+    textfile = open("bestFitness.txt", "w")
+    for element in best_fitness:
+        textfile.write(str(element) + "\n")
+    textfile.close()
+    textfile2 = open("sumFitness.txt", "w")
+    for element in sum_fitness:
+        textfile2.write(str(element) + "\n")
+    textfile2.close() 
+
 def saving(gen):
     global the_best_of_bests, score, fitness_data
     maxFit = max(score)
@@ -293,16 +316,8 @@ def saving(gen):
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
 
-def saveScore(best_fitness, sum_fitness):
-    textfile = open("bestFitness.txt", "w")
-    for element in best_fitness:
-        textfile.write(str(element) + "\n")
-    textfile.close()
-    textfile2 = open("sumFitness.txt", "w")
-    for element in sum_fitness:
-        textfile2.write(str(element) + "\n")
-    textfile2.close() 
-
+best_fitness = []
+sum_fitness = []
 # 1ª vez executando, prepara o ambiente
 generate_population()
 gen = 1
@@ -314,8 +329,6 @@ event = ["NOP"] * number_population
 
 fitness_data.append(sum(score))
 
-best_fitness = []
-sum_fitness = []
 
 while True:
                 
