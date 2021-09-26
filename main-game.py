@@ -1,3 +1,5 @@
+from os import system
+import os
 import time
 import pygame
 import sys
@@ -149,7 +151,7 @@ def roulette_selection():
     totalfitness = 0
     # calcula o fitness total
     for i in range(number_population):
-        totalfitness += pow(time_alive[i], score[i])
+        totalfitness += time_alive[i] * score[i]
 
     if totalfitness == 0:
         totalfitness = 1
@@ -160,7 +162,7 @@ def roulette_selection():
     fi, mi = -1, -1
     # calcula a probabilidade de escolher um individuo
     for x in range(number_population):
-        probabilities.append([pow(time_alive[x], score[x])/totalfitness, x])
+        probabilities.append([(time_alive[x] * score[x])/totalfitness, x])
     
     #ordena do melhor para o pior
     probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
