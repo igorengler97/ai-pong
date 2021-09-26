@@ -251,6 +251,15 @@ def saving(gen):
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
             
+def saveScore(best_fitness, sum_fitness):
+    textfile = open("bestFitness.txt", "w")
+    for element in best_fitness:
+        textfile.write(str(element) + "\n")
+    textfile.close()
+    textfile2 = open("sumFitness.txt", "w")
+    for element in sum_fitness:
+        textfile2.write(str(element) + "\n")
+    textfile2.close()
 
 generate_population()
 
@@ -271,6 +280,8 @@ raw_data = renderer.tostring_rgb()
 
 graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
 
+best_fitness = []
+sum_fitness = []
 
 while True:
                 
@@ -289,6 +300,10 @@ while True:
 
         game_over = ball_animation()
         if game_over:
+            best_fitness.append(max(score))
+            #print(best_fitness)
+            sum_fitness.append(sum(score))
+            #print(sum_fitness)
             break
         player_animation()
 
@@ -296,6 +311,7 @@ while True:
             if a.type == pygame.KEYDOWN:
                 if a.key == pygame.K_ESCAPE:
                     print("saindo")
+                    saveScore(best_fitness, sum_fitness)
                     sys.exit()
                 if a.key == pygame.K_s:
                     print('Eu sou jesus e eu tenho o poder de salvar')
@@ -329,14 +345,14 @@ while True:
                 pygame.draw.rect(screen, player_colors[x], player[x][0])
         pygame.draw.ellipse(screen, light_grey, ball)
 
-        ax.plot(fitness_data)
-        canvas = agg.FigureCanvasAgg(fig)
-        canvas.draw()
-        renderer = canvas.get_renderer()
-        raw_data = renderer.tostring_rgb()
+        #ax.plot(fitness_data)
+        #canvas = agg.FigureCanvasAgg(fig)
+        #canvas.draw()
+        #renderer = canvas.get_renderer()
+        #raw_data = renderer.tostring_rgb()
 
-        graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
-        screen.blit(graph, (0,0))
+        #graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
+        #screen.blit(graph, (0,0))
         
         # atualizando a tela
         pygame.display.flip()
