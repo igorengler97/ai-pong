@@ -103,6 +103,7 @@ def crossover():
     visited = {}
     new_population = []
     for x in range(number_population):
+        time.slepp(0.0001)
         # pai, mãe, index pai, index mãe
         father, mother, fi, mi = roulette_selection()
 
