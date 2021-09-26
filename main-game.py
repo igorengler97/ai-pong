@@ -323,7 +323,7 @@ def saving(gen):
 
 def plotInfo():
     plot1 = plt.figure(1)
-    plot1 = plt.figure(figsize=(15,4))
+    plot1 = plt.figure(figsize=(15,8))
     plt.plot(gen_list, best_fitness)
     plt.xlabel("Generation")
     plt.ylabel("Best Fitness")
@@ -332,7 +332,7 @@ def plotInfo():
     plt.savefig('BestFitness.png')
 
     plot2 = plt.figure(2)
-    plot2 = plt.figure(figsize=(15,4))
+    plot2 = plt.figure(figsize=(15,8))
     plt.plot(gen_list, sum_fitness)
     plt.xlabel("Generation")
     plt.ylabel("Sum of fitness")
