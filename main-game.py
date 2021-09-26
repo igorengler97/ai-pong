@@ -45,7 +45,7 @@ for x in range(number_population):
     player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
     time_alive.append(t)
 # variaveis de velocidade
-ball_speed_x = 2
+ball_speed_x = 1
 ball_speed_y = 2
 player_speed = [0] * number_population
 
@@ -292,7 +292,17 @@ def saving(gen):
     history_fitness.close()
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
-            
+
+def saveScore(best_fitness, sum_fitness):
+    textfile = open("bestFitness.txt", "w")
+    for element in best_fitness:
+        textfile.write(str(element) + "\n")
+    textfile.close()
+    textfile2 = open("sumFitness.txt", "w")
+    for element in sum_fitness:
+        textfile2.write(str(element) + "\n")
+    textfile2.close() 
+
 # 1ª vez executando, prepara o ambiente
 generate_population()
 gen = 1
@@ -304,6 +314,8 @@ event = ["NOP"] * number_population
 
 fitness_data.append(sum(score))
 
+best_fitness = []
+sum_fitness = []
 
 while True:
                 
@@ -322,12 +334,15 @@ while True:
 
         game_over = ball_animation()
         if game_over:
+            best_fitness.append(max(score))
+            sum_fitness.append(sum(score))
             break
         player_animation()
 
         for a in pygame.event.get():
             if a.type == pygame.KEYDOWN:
                 if a.key == pygame.K_ESCAPE:
+                    saveScore(best_fitness, sum_fitness)
                     print("saindo")
                     sys.exit()
                 if a.key == pygame.K_s:
