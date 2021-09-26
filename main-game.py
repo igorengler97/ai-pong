@@ -1,4 +1,4 @@
-from time import time
+import time
 import pygame
 import sys
 import random
@@ -14,14 +14,14 @@ import matplotlib.pylab as plt
 
 # variaveis do algoritmo genetico
 population = []
-number_population = 100
-size_dna = 800
+number_population = 400
+size_dna = 300
 choices = [
     "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.02
+mutation_rate = 0.03
 the_best_of_bests = [[], 0]
 
 # setup geral
@@ -37,11 +37,13 @@ pygame.display.set_caption('pong')
 # retangulos do jogo
 ball = pygame.Rect(screen_width/2 - 15, screen_height/2 - 15, 30, 30)
 player = []
+time_alive = []
 
-# pos 0 = player; pos 1 = vivo/morto
+# pos 0 = player; pos 1 = vivo/morto; pos 2 = hora nascimento
+t = time.time()
 for x in range(number_population):
     player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
-
+    time_alive.append(t)
 # variaveis de velocidade
 ball_speed_x = 2
 ball_speed_y = 2
@@ -62,6 +64,7 @@ score = [0] * number_population
 myfont = pygame.font.SysFont('Arial', 25)
 
 def generate_dna():
+    # função que gera o chormossomo de um individuo aleatóriamente
     global size_dna, choices
 
     dna = []
@@ -71,6 +74,7 @@ def generate_dna():
     return dna
 
 def generate_population():
+    # função que gera a população
     global population, number_population
 
     for x in range(number_population):
@@ -100,20 +104,24 @@ def crossover():
         # pai, mãe, index pai, index mãe
         father, mother, fi, mi = roulette_selection()   
         position = random.randint(0, size_dna - 1)
+        # chance de copularem
         chance_of_sex = random.uniform(0, 1)
-        if (not visited.get(fi) or not visited.get(mi)) and chance_of_sex < 0.8:
+        # chance da informação genetica do pai vir primeiro
+        if (not visited.get(fi) or not visited.get(mi)) and chance_of_sex < 0.95:
             visited[position] = True
             if random.randint(0, 100) > 50:
                 child = father[0:position] + mother[position:]        
                 if random.randint(0, 100) <= mutation_rate:
                     child = mutation(child)
                 new_population.append(child)
+            # chance da informação genetica da mãe vir primeiro
             else:
                 child = mother[0:position] + father[position:]
                 if random.randint(0, 100) < mutation_rate:
                     child = mutation(child)
                 new_population.append(child)
         else:
+            # se não copularem então só gera um individuo novo
             new_population.append(generate_dna())
     return new_population
 
@@ -123,23 +131,31 @@ def roulette_selection():
     # p(i) = fi / soma dos fitness
     # p(i) = probabilidade do individuo ser selecionado
     # fi = fitness do individuo
-    global score, population, number_population, visited
+    global score, population, number_population, visited, player
     
-    maxfit = sum(score, 0)
-    if maxfit == 0:
-        maxfit = 1
+    totalfitness = 0
+    # calcula o fitness total
+    for i in range(number_population):
+        totalfitness += pow(time_alive[i], score[i])
+
+    if totalfitness == 0:
+        totalfitness = 1
     
     probabilities = []
     father, mother = [], []
+    # fi = index do pai, mi = index da mãe
     fi, mi = -1, -1
+    # calcula a probabilidade de escolher um individuo
     for x in range(number_population):
-        probabilities.append([score[x]/maxfit, x])
+        probabilities.append([pow(time_alive[x], score[x])/totalfitness, x])
     
+    #ordena do melhor para o pior
     probabilities = sorted(probabilities, key=itemgetter(0), reverse=True)
     pick = random.uniform(0, 1)
     
+    # sorteia e marca como visitado a mãe
     for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
+        if pick <= probabilities[x][0] and (not visited.get(probabilities[x][1])):
             mi = probabilities[x][1]
             mother = population[mi]
             visited[mi] = True
@@ -152,8 +168,9 @@ def roulette_selection():
 
     pick = random.uniform(0, 1)
 
+    # sorteia e marca como visitado o pai
     for x in range(number_population - 1):
-        if pick >= 1 - probabilities[x][0] and (not visited.get(probabilities[x][1])):
+        if pick <= probabilities[x][0] and (not visited.get(probabilities[x][1])):
             fi = probabilities[x][1]
             father = population[fi]
             visited[fi] = True
@@ -172,9 +189,16 @@ def roulette_selection():
 
     # http://www2.peq.coppe.ufrj.br/Pessoal/Professores/Arge/COQ897/Naturais/aulas_piloto/aula4.pdf
 
-    population[int(random.uniform(0, 1))]
+def fitness(index):
+    global time_alive
+    ini = time_alive[index]
+    end = time.time()
+    time_alive[index] = (end - ini)
+
 
 def ball_animation():
+    # faz a animação da bola e vê se houve colisão
+    # se tiver colisão mata e calcula o fitness das raquetes que não tiveram colisão
     global ball_speed_x, ball_speed_y, score
 
     ball.x += ball_speed_x
@@ -191,21 +215,27 @@ def ball_animation():
 
     for x in range(len(player)):
         if ball.colliderect(player[x][0]) and player[x][1]:
+            # se tiver colisão para pq tem que checar toda a população
             is_colliding = True
             break
     if is_colliding:
+        # faz a bola ir pra cima
         ball_speed_y *= -1
         i = 0
         number_player = len(player) 
         while i < number_player:
             if ball.colliderect(player[i][0]) and player[i][1]:
+                # se teve colisão então aumenta o score da raquete viva
                 score[i] += 1
             else:
+                # senão mata ela e calcula o fitness
                 player[i][1] = False
+                fitness(i)
             i += 1
     return False
 
 def player_animation():
+    # computa a movimentação na tela
     global player
     for x in range(len(player)):
         # se o jogador estiver vivo computa a animação
@@ -218,70 +248,62 @@ def player_animation():
                 player[x][0].right = screen_width
 
 def boruto_next_generations(gen):
-    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests
+    # prepara a proxima geração
+    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests, time_alive
     ball.center = (screen_width/2, screen_height/2)
     if ball_speed_x < 0:
         ball_speed_y *= -1
 
     maxFitIndex =  max(range(len(score)), key=score.__getitem__)
 
+    # salva o melhor dos individuos de todo a evolução de todas as gerações do universo das raquetes
     if max(score) > the_best_of_bests[1]:
-        the_best_of_bests = [population[maxFitIndex], max(score)]
+        the_best_of_bests = [population[maxFitIndex], max(score)*time_alive[maxFitIndex]]
 
+    # cruza
     population = crossover()
+    # reseta as variaveis
     player = []
     score = [0] * number_population
     player_speed = [0] * number_population
+    time_alive = []
+    # calcula a data de nascimento
+    t = time.time()
     for x in range(number_population):
+        # atribui ao player uma raquete e uma data de nascimento
         player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
+        time_alive.append(t)
     
     for x in range(number_population):
         player[x][0].center = (screen_width/2, screen_height - 55)
+    
+    # atualiza o display
     pygame.display.flip()
 
-event = ["NOP"] * number_population
-
 def saving(gen):
-    global the_best_of_bests, score
+    global the_best_of_bests, score, fitness_data
     maxFit = max(score)
     
     textfile = open("chromossome_"+ str(gen) + "_" + str(maxFit) +".txt", "w")
+    history_fitness = open("fitness.txt", "w")
     for element in the_best_of_bests:
         textfile.write(str(element) + "\n")
+        history_fitness.write(str(fitness_data) + "\n")
+    history_fitness.close()
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
             
-def saveScore(best_fitness, sum_fitness):
-    textfile = open("bestFitness.txt", "w")
-    for element in best_fitness:
-        textfile.write(str(element) + "\n")
-    textfile.close()
-    textfile2 = open("sumFitness.txt", "w")
-    for element in sum_fitness:
-        textfile2.write(str(element) + "\n")
-    textfile2.close()
-
+# 1ª vez executando, prepara o ambiente
 generate_population()
-
 gen = 1
 best_score = 0
 alive = 0
 fitness_data = [0]
+# variavel usada no while 1
+event = ["NOP"] * number_population
 
 fitness_data.append(sum(score))
-fig = plt.figure(figsize=[2,2], dpi=100)
-ax = fig.gca()
-# alterar pra fitness_data
-ax.plot(fitness_data)
-canvas = agg.FigureCanvasAgg(fig)
-canvas.draw()
-renderer = canvas.get_renderer()
-raw_data = renderer.tostring_rgb()
 
-graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
-
-best_fitness = []
-sum_fitness = []
 
 while True:
                 
@@ -300,10 +322,6 @@ while True:
 
         game_over = ball_animation()
         if game_over:
-            best_fitness.append(max(score))
-            #print(best_fitness)
-            sum_fitness.append(sum(score))
-            #print(sum_fitness)
             break
         player_animation()
 
@@ -311,7 +329,6 @@ while True:
             if a.type == pygame.KEYDOWN:
                 if a.key == pygame.K_ESCAPE:
                     print("saindo")
-                    saveScore(best_fitness, sum_fitness)
                     sys.exit()
                 if a.key == pygame.K_s:
                     print('Eu sou jesus e eu tenho o poder de salvar')
@@ -344,15 +361,6 @@ while True:
             if player[x][1]:
                 pygame.draw.rect(screen, player_colors[x], player[x][0])
         pygame.draw.ellipse(screen, light_grey, ball)
-
-        #ax.plot(fitness_data)
-        #canvas = agg.FigureCanvasAgg(fig)
-        #canvas.draw()
-        #renderer = canvas.get_renderer()
-        #raw_data = renderer.tostring_rgb()
-
-        #graph = pygame.image.fromstring(raw_data, canvas.get_width_height(), "RGB")
-        #screen.blit(graph, (0,0))
         
         # atualizando a tela
         pygame.display.flip()
