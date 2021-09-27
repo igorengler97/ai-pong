@@ -24,7 +24,7 @@ choices = [
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = input("Insira a taxa de mutação (ex: 0.04 para 4%): ")
+mutation_rate = float(input("Insira a taxa de mutação (ex: 0.04 para 4%): "))
 the_best_of_bests = [[], 0]
 
 # setup geral
@@ -314,7 +314,7 @@ def saveScore():
         textfile2.write(str(element) + "\n")
     textfile2.close() 
 
-def saving(gen):
+def saveGen(gen):
     global the_best_of_bests, score, fitness_data
     
     textfile = open("chromossome.txt", "w")
@@ -341,7 +341,7 @@ def plotInfo():
     plt.ylabel("Sum of fitness")
     plt.title("Sum of fitness of each generation")
     
-    plt.savefig('Sumfitness.png')
+    plt.savefig('SumFitness.png')
 
 
 best_fitness = []
@@ -462,7 +462,7 @@ while True:
 
         if gen >= 1001:
            saveScore()
-           saving(gen)
+           saveGen(gen)
            print("saindo")
            pygame.quit()
            plotInfo()
@@ -477,7 +477,7 @@ while True:
                     plotInfo()
                     sys.exit()
                 if a.key == pygame.K_s:
-                    saving(gen)
+                    saveGen(gen)
 
         # aparencia dos objetos
         screen.fill(bg_color)
