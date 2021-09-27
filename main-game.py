@@ -385,6 +385,7 @@ for fn in filenames:
         population = new_arr.split(',')
         population.pop(-1)
         population.insert(-1, str("NOP"))
+        size_dna = len(population)
         
         for i in range(len(population)):
             if population[i] == "NOP" or population[i] == 'NOP':
@@ -402,12 +403,14 @@ for fn in filenames:
             print("Executando o resultado")
             population = [population] * number_population
             execute = True
+    
+        filetext.close()
+        break
     elif keypress == 'n' or keypress == 'N':
         print('Evoluindo novos')
         # 1ª vez executando, prepara o ambiente
         generate_population()
         break
-    filetext.close()
 
 if not exits_chromossome:
     generate_population()
