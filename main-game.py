@@ -1,3 +1,4 @@
+from hashlib import new
 from os import system
 import os
 import time
@@ -8,11 +9,11 @@ from operator import itemgetter
 from time import sleep
 
 import matplotlib
+from pygame import key
 matplotlib.use("Agg")
 
 import matplotlib.backends.backend_agg as agg
 import matplotlib.pylab as plt
-
 
 # variaveis do algoritmo genetico
 population = []
@@ -23,7 +24,7 @@ choices = [
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.03
+mutation_rate = 0.1
 the_best_of_bests = [[], 0]
 
 # setup geral
@@ -41,27 +42,9 @@ ball = pygame.Rect(screen_width/2 - 15, screen_height/2 - 15, 30, 30)
 player = []
 time_alive = []
 
-# pos 0 = player; pos 1 = vivo/morto; pos 2 = hora nascimento
-t = time.time()
-for x in range(number_population):
-    player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
-    time_alive.append(t)
-# variaveis de velocidade
-ball_speed_x = 2
-ball_speed_y = 2
-player_speed = [0] * number_population
-
 # cores
 bg_color = pygame.Color('grey12')
-player_colors = [
-    (random.randint(30, 255), random.randint(30, 255), random.randint(30, 255) ) 
-    for x in range(number_population)
-    ]
-light_grey = (200, 200, 200)
-white = (255,255,255)
 
-# variavel de pontuação
-score = [0] * number_population
 
 myfont = pygame.font.SysFont('Arial', 25)
 
@@ -263,6 +246,30 @@ def player_animation():
             if player[x][0].right >= screen_width:
                 player[x][0].right = screen_width
 
+def naruto_shippuden():
+    # se só estier executando os resultados só executa eles em loop
+    global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests, time_alive
+
+    ball.center = (screen_width/2, screen_height/2)
+    if ball_speed_x < 0:
+        ball_speed_y *= -1
+    
+    player = []
+    score = [0] * number_population
+    player_speed = [0] * number_population
+    best_score = 0
+
+    for x in range(number_population):
+        # atribui ao player uma raquete e uma data de nascimento
+        player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
+
+    for x in range(number_population):
+        player[x][0].center = (screen_width/2, screen_height - 55)
+
+    # atualiza o display
+    pygame.display.flip()
+
+
 def boruto_next_generations(gen):
     # prepara a proxima geração
     global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests, time_alive
@@ -346,17 +353,86 @@ def plotInfo():
 best_fitness = []
 sum_fitness = []
 gen_list = []
-# 1ª vez executando, prepara o ambiente
-generate_population()
 gen = 1
 best_score = 0
 alive = 0
 fitness_data = [0]
-# variavel usada no while 1
-event = ["NOP"] * number_population
 
+# chromossome_102_1
+
+path = './'
+
+filenames = os.listdir(path)
+
+# determina se é só execução dos resultados
+execute = False
+
+for fn in filenames:
+    if 'chromossome' not in fn:
+        continue
+    
+    print("Cromossomo encontrado")
+    keypress = input('Gostaria de carrega-lo? Y/n ')
+    
+    if keypress == 'y' or keypress == 'Y' or keypress == '':
+        print("Carregando dados...")
+        print(fn)
+        filetext = open(fn, "r")
+        new_arr = filetext.read()
+        new_arr = new_arr.replace("[","")
+        new_arr = new_arr.replace("]", "")
+        new_arr = new_arr.replace(" ", "")
+        new_arr = new_arr.replace("'", "")
+        population = new_arr.split(',')
+        population.pop(-1)
+        population.insert(-1, str("NOP"))
+        
+        for i in range(len(population)):
+            if population[i] == "NOP" or population[i] == 'NOP':
+                continue
+            else:
+                if int(population[i]) == 1073741903:
+                    population[i] = pygame.K_RIGHT
+                else:
+                    population[i] = pygame.K_LEFT
+        keypress = input("Gostária de continuar evoluindo esta solução? y/N ")
+        
+        if keypress == 'y' or keypress == 'Y':
+            population = [population] * number_population
+        elif keypress == 'n' or keypress == 'N' or keypress == '':
+            print("Executando o resultado")
+            population = [population] * number_population
+            execute = True
+    elif keypress == 'n' or keypress == 'N':
+        print('Evoluindo novos')
+        # 1ª vez executando, prepara o ambiente
+        generate_population()
+        break
+    filetext.close()
+
+player_colors = [
+    (random.randint(30, 255), random.randint(30, 255), random.randint(30, 255)) 
+    for x in range(number_population)
+    ]
+light_grey = (200, 200, 200)
+white = (255,255,255)
+
+# variavel de pontuação
+score = [0] * number_population
 fitness_data.append(sum(score))
 
+# pos 0 = player; pos 1 = vivo/morto; pos 2 = hora nascimento
+t = time.time()
+for x in range(number_population):
+    player.append([pygame.Rect(screen_width/2 - 60, screen_height - 60, 120, 2), True])
+    time_alive.append(t)
+# variaveis de velocidade
+ball_speed_x = 2
+ball_speed_y = 2
+player_speed = [0] * number_population
+
+# variavel usada no while 1
+event = ["NOP"] * number_population
 
 while True:
                 
@@ -381,12 +457,12 @@ while True:
             break
         player_animation()
 
-        #if gen >= 1001:
-        #    saveScore()
-        #    print("saindo")
-        #    pygame.quit()
-        #    plotInfo()
-        #    sys.exit()
+        if gen >= 1001:
+           saveScore()
+           print("saindo")
+           pygame.quit()
+           plotInfo()
+           sys.exit()
 
         for a in pygame.event.get():
             if a.type == pygame.KEYDOWN:
@@ -437,6 +513,10 @@ while True:
             best_score = max(score)
 
         fitness_data.append(sum(score))
-        boruto_next_generations(gen)
-        gen +=1
+        if not execute:
+            boruto_next_generations(gen)
+            gen +=1
+        else:
+            naruto_shippuden()
+        
     naoapagaressamerda = pygame.event.get()
