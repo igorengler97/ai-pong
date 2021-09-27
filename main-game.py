@@ -17,14 +17,14 @@ import matplotlib.pylab as plt
 
 # variaveis do algoritmo genetico
 population = []
-number_population = 400
-size_dna = 300
+number_population = int(input("Insira o numero da população (valor inteiro): "))
+size_dna = int(input("Insira o tamanho do DNA (valor inteiro): "))
 choices = [
     "NOP",
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.09
+mutation_rate = input("Insira a taxa de mutação (ex: 0.04 para 4%): ")
 the_best_of_bests = [[], 0]
 
 # setup geral
@@ -35,21 +35,21 @@ clock = pygame.time.Clock()
 screen_width = 720
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('pong')
+pygame.display.set_caption('GenPong')
 
 # retangulos do jogo
 ball = pygame.Rect(screen_width/2 - 15, screen_height/2 - 15, 30, 30)
 player = []
+
 time_alive = []
 
 # cores
 bg_color = pygame.Color('grey12')
-
-
+# fonte utilizada no jogo
 myfont = pygame.font.SysFont('Arial', 25)
 
 def generate_dna():
-    # função que gera o chormossomo de um individuo aleatóriamente
+    # função que gera o cromossomo de um individuo aleatóriamente
     global size_dna, choices
 
     dna = []
@@ -82,6 +82,7 @@ def mutation(dna, method='bit_mutation'):
 visited = {}
 
 def crossover():
+    #função que faz o cruzamento entre indivíduos
     global number_population, mutation_rate, visited
     visited = {}
     new_population = []
@@ -102,10 +103,10 @@ def crossover():
             continue
 
         position = random.randint(0, size_dna - 1)
-        # chance de copularem
-        chance_of_sex = random.uniform(0, 1)
+        # chance de cruzarem
+        crossover_chance = random.uniform(0, 1)
         # chance da informação genetica do pai vir primeiro
-        if (not visited.get(fi) or not visited.get(mi)) and chance_of_sex < 0.95:
+        if (not visited.get(fi) or not visited.get(mi)) and crossover_chance < 0.95:
             visited[fi] = True
             visited[mi] = True
             if random.randint(0, 100) > 50:
@@ -120,11 +121,13 @@ def crossover():
                     child = mutation(child)
                 new_population.append(child)
         else:
-            # se não copularem então só gera um individuo novo
+            # se não cruzarem então só gera um individuo novo
             new_population.append(generate_dna())
     return new_population
 
 def roulette_selection():
+    #função responsável por selecionar os indivíduos, tendo como chance pontuação*tempo_de_vida
+
     # Acho que o metodo da roleta está funcionando
     # Precisa validar
     # p(i) = fi / soma dos fitness
@@ -183,12 +186,10 @@ def roulette_selection():
     return [father, mother, fi, mi]
     
     # https://www.cin.ufpe.br/~rso/ag-tbl.pdf slide 20
-    # https://github.com/FredericoBender/Algoritmo-Genetico-Problema-da-Mochila/blob/823e50d523e25f5175a581a533dfde0429d609f3/genetic2020.py#L11
-    # tentei copiar o rolê mas quebra a aplicação
-
     # http://www2.peq.coppe.ufrj.br/Pessoal/Professores/Arge/COQ897/Naturais/aulas_piloto/aula4.pdf
 
 def fitness(index):
+    # função de calculo de fitness
     global time_alive
     ini = time_alive[index]
     end = time.time()
@@ -247,7 +248,7 @@ def player_animation():
                 player[x][0].right = screen_width
 
 def naruto_shippuden():
-    # se só estier executando os resultados só executa eles em loop
+    # se só estiver executando os resultados só executa eles em loop
     global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests, time_alive
 
     ball.center = (screen_width/2, screen_height/2)
@@ -270,7 +271,7 @@ def naruto_shippuden():
     pygame.display.flip()
 
 
-def boruto_next_generations(gen):
+def next_generation(gen):
     # prepara a proxima geração
     global ball_speed_x, ball_speed_y, number_population, player, population, score, player_speed, the_best_of_bests, time_alive
     ball.center = (screen_width/2, screen_height/2)
@@ -280,7 +281,7 @@ def boruto_next_generations(gen):
     maxFitIndex =  max(range(len(score)), key=score.__getitem__)
 
     # salva o melhor dos individuos de todo a evolução de todas as gerações do universo das raquetes
-    if max(score) > the_best_of_bests[1]:
+    if max(score)*time_alive[maxFitIndex] > the_best_of_bests[1]:
         the_best_of_bests = [population[maxFitIndex], max(score)*time_alive[maxFitIndex]]
 
     # cruza
@@ -320,8 +321,7 @@ def saving(gen):
     for element in the_best_of_bests:
         textfile.write(str(element) + "\n")
     textfile.close()
-    print("Jesus salvou o melhor dos melhores")
-
+    print("O melhor jogador de todos foi salvo")
 
 
 def plotInfo():
@@ -343,8 +343,6 @@ def plotInfo():
     
     plt.savefig('Sumfitness.png')
 
-
-    
 
 best_fitness = []
 sum_fitness = []
@@ -479,7 +477,6 @@ while True:
                     plotInfo()
                     sys.exit()
                 if a.key == pygame.K_s:
-                    print('Eu sou jesus e eu tenho o poder de salvar')
                     saving(gen)
 
         # aparencia dos objetos
@@ -520,9 +517,9 @@ while True:
 
         fitness_data.append(sum(score))
         if not execute:
-            boruto_next_generations(gen)
+            next_generation(gen)
             gen +=1
         else:
             naruto_shippuden()
         
-    naoapagaressamerda = pygame.event.get()
+    doNotDelete = pygame.event.get()
