@@ -24,7 +24,7 @@ choices = [
     pygame.K_LEFT,
     pygame.K_RIGHT,
 ]
-mutation_rate = 0.1
+mutation_rate = 0.09
 the_best_of_bests = [[], 0]
 
 # setup geral
@@ -315,14 +315,10 @@ def saveScore():
 
 def saving(gen):
     global the_best_of_bests, score, fitness_data
-    maxFit = max(score)
     
-    textfile = open("chromossome_"+ str(gen) + "_" + str(maxFit) +".txt", "w")
-    history_fitness = open("fitness.txt", "w")
+    textfile = open("chromossome.txt", "w")
     for element in the_best_of_bests:
         textfile.write(str(element) + "\n")
-        history_fitness.write(str(fitness_data) + "\n")
-    history_fitness.close()
     textfile.close()
     print("Jesus salvou o melhor dos melhores")
 
@@ -366,11 +362,14 @@ filenames = os.listdir(path)
 
 # determina se é só execução dos resultados
 execute = False
+exits_chromossome = False
 
 for fn in filenames:
     if 'chromossome' not in fn:
+        exits_chromossome = False
         continue
     
+    exits_chromossome = True
     print("Cromossomo encontrado")
     keypress = input('Gostaria de carrega-lo? Y/n ')
     
@@ -409,6 +408,9 @@ for fn in filenames:
         generate_population()
         break
     filetext.close()
+
+if not exits_chromossome:
+    generate_population()
 
 player_colors = [
     (random.randint(30, 255), random.randint(30, 255), random.randint(30, 255)) 
@@ -459,6 +461,7 @@ while True:
 
         if gen >= 1001:
            saveScore()
+           saving(gen)
            print("saindo")
            pygame.quit()
            plotInfo()
